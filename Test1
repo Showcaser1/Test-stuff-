@@ -20,7 +20,7 @@ local teleportFunc = queueonteleport or queue_on_teleport or syn and syn.queue_o
                 end
             end
             task.wait(0.3)
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/KykyryzoB/fast-slap-farm/main/without%20autoexe.lua"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/Showcaser1/Test-stuff-/refs/heads/main/Another%20test"))()
         ]])
     end
     local serverList = {}

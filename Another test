@@ -1,36 +1,220 @@
-local teleportFunc = queueonteleport or queue_on_teleport or syn and syn.queue_on_teleport
-    if teleportFunc then
-        teleportFunc([[
-            if not game:IsLoaded() then
-                game.Loaded:Wait()
-            end
-            repeat task.wait(0.3) until game.Players.LocalPlayer
-            repeat task.wait(0.3) until game.Players.LocalPlayer.Character ~= nil and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if game.Players.LocalPlayer.Character:FindFirstChild("entered") == nil then
-                repeat task.wait(0.3)
-                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, workspace.Lobby.Teleport1, 0)
-                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, workspace.Lobby.Teleport1, 1)
-                until game.Players.LocalPlayer.Character:FindFirstChild("entered")
-            end
-            task.wait(0.3)
-            for i, v in ipairs(workspace.Arena.island5.Slapples:GetDescendants()) do
-                if v.Name == "Glove" and v:FindFirstChildWhichIsA("TouchTransmitter") then
-                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, v, 0)
-                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, v, 1)
+-- CONFIG
+local targetNames = {
+    "La Vacca Saturno Saturnita",
+    "La Grande Combinasion",
+    "Trippi Troppi Troppa Trippa",
+    "Agarrini Ia Palini",
+    "Sammyni Spyderini",
+    "Los Tralaleritos",
+    "Las Tralaleritas",
+    "Graipuss Medussi",
+    "Nuclearo Dinossauro",
+    "Garama and Madundung",
+    "Tortuginni Dragonfruitini",
+    "Pot Hotspot",
+    "Las Vaquitas Saturnitas",
+    "Chicleteira Bicicleteira",
+}
+
+-- SERVICES
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local StarterGui = game:GetService("StarterGui")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+-- QUEUE ON TELEPORT
+local teleportFunc = queueonteleport or queue_on_teleport or (syn and syn.queue_on_teleport)
+if teleportFunc then
+    teleportFunc([[
+        if not game:IsLoaded() then
+            game.Loaded:Wait()
+        end
+        repeat task.wait(0.3) until game.Players.LocalPlayer
+        local targetNames = {
+            "La Vacca Saturno Saturnita",
+            "La Grande Combinasion",
+            "Trippi Troppi Troppa Trippa",
+            "Agarrini Ia Palini",
+            "Sammyni Spyderini",
+            "Los Tralaleritos",
+            "Las Tralaleritas",
+            "Graipuss Medussi",
+            "Nuclearo Dinossauro",
+            "Garama and Madundung",
+            "Tortuginni Dragonfruitini",
+            "Pot Hotspot",
+            "Las Vaquitas Saturnitas",
+            "Chicleteira Bicicleteira",
+        }
+        local function showUI(name)
+            local gui = Instance.new("ScreenGui", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
+            gui.ResetOnSpawn = false
+            gui.Name = "BrainrotNotifier"
+            local textLabel = Instance.new("TextLabel", gui)
+            textLabel.Size = UDim2.new(0.6, 0, 0.1, 0)
+            textLabel.Position = UDim2.new(0.2, 0, 0.05, 0)
+            textLabel.Text = "🔍 Found: " .. name
+            textLabel.Font = Enum.Font.SourceSansBold
+            textLabel.TextScaled = true
+            textLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+            textLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+            textLabel.BorderSizePixel = 0
+        end
+        local function highlight(obj)
+            local box = Instance.new("SelectionBox", obj)
+            box.Adornee = obj
+            box.LineThickness = 0.1
+            box.Color3 = Color3.fromRGB(255, 0, 0)
+            box.Name = "BrainrotHighlight"
+        end
+        local function searchForTarget()
+            for _, obj in ipairs(game:GetService("Workspace"):GetDescendants()) do
+                if table.find(targetNames, obj.Name) then
+                    print("🎯 Found:", obj.Name)
+                    showUI(obj.Name)
+                    if obj:IsA("BasePart") then
+                        highlight(obj)
+                    elseif obj:IsA("Model") and obj.PrimaryPart then
+                        highlight(obj.PrimaryPart)
+                    end
+                    return true
                 end
             end
-            task.wait(0.3)
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/Showcaser1/Test-stuff-/refs/heads/main/Another%20test"))()
-        ]])
+            return false
+        end
+        local function hopServer()
+            local success, data = pcall(function()
+                local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+                local response = game:HttpGetAsync(url)
+                return game:GetService("HttpService"):JSONDecode(response)
+            end)
+            if success and data and data.data then
+                local serverList = {}
+                for _, v in ipairs(data.data) do
+                    if v.playing and type(v) == "table" and v.maxPlayers > v.playing and v.id ~= game.JobId then
+                        serverList[#serverList + 1] = v.id
+                    end
+                end
+                if #serverList > 0 then
+                    game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, serverList[math.random(1, #serverList)])
+                else
+                    game:GetService("StarterGui"):SetCore("SendNotification", {
+                        Title = "Error",
+                        Text = "No Server Found.",
+                        Icon = "rbxassetid://7733658504",
+                        Duration = 5
+                    })
+                end
+            else
+                game:GetService("StarterGui"):SetCore("SendNotification", {
+                    Title = "Error",
+                    Text = "Failed to fetch server list: " .. tostring(data),
+                    Icon = "rbxassetid://7733658504",
+                    Duration = 5
+                })
+                game:GetService("TeleportService"):Teleport(game.PlaceId)
+            end
+        end
+        task.spawn(function()
+            while true do
+                if searchForTarget() then
+                    break
+                else
+                    hopServer()
+                end
+                task.wait(5)
+            end
+        end)
+    ]])
+end
+
+-- UI FUNCTION
+local function showUI(name)
+    local gui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+    gui.ResetOnSpawn = false
+    gui.Name = "BrainrotNotifier"
+    local textLabel = Instance.new("TextLabel", gui)
+    textLabel.Size = UDim2.new(0.6, 0, 0.1, 0)
+    textLabel.Position = UDim2.new(0.2, 0, 0.05, 0)
+    textLabel.Text = "🔍 Found: " .. name
+    textLabel.Font = Enum.Font.SourceSansBold
+    textLabel.TextScaled = true
+    textLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    textLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+    textLabel.BorderSizePixel = 0
+end
+
+-- HIGHLIGHT FUNCTION
+local function highlight(obj)
+    local box = Instance.new("SelectionBox", obj)
+    box.Adornee = obj
+    box.LineThickness = 0.1
+    box.Color3 = Color3.fromRGB(255, 0, 0)
+    box.Name = "BrainrotHighlight"
+end
+
+-- SEARCH FUNCTION
+local function searchForTarget()
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if table.find(targetNames, obj.Name) then
+            print("🎯 Found:", obj.Name)
+            showUI(obj.Name)
+            if obj:IsA("BasePart") then
+                highlight(obj)
+            elseif obj:IsA("Model") and obj.PrimaryPart then
+                highlight(obj.PrimaryPart)
+            end
+            return true
+        end
     end
-    local serverList = {}
-for _, v in ipairs(game:GetService("HttpService"):JSONDecode(game:HttpGetAsync("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")).data) do
-	if v.playing and type(v) == "table" and v.maxPlayers > v.playing and v.id ~= game.JobId then
-		serverList[#serverList + 1] = v.id
-	end
+    return false
 end
-if #serverList > 0 then
-	game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, serverList[math.random(1, #serverList)])
-else
-    game:GetService("StarterGui"):SetCore("SendNotification",{Title = "Error",Text = "No Server Found.",Icon = "rbxassetid://7733658504",Duration = 5})
+
+-- SERVER HOP FUNCTION
+local function hopServer()
+    local success, data = pcall(function()
+        local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+        local response = game:HttpGetAsync(url)
+        return HttpService:JSONDecode(response)
+    end)
+    if success and data and data.data then
+        local serverList = {}
+        for _, v in ipairs(data.data) do
+            if v.playing and type(v) == "table" and v.maxPlayers > v.playing and v.id ~= game.JobId then
+                serverList[#serverList + 1] = v.id
+            end
+        end
+        if #serverList > 0 then
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, serverList[math.random(1, #serverList)])
+        else
+            StarterGui:SetCore("SendNotification", {
+                Title = "Error",
+                Text = "No Server Found.",
+                Icon = "rbxassetid://7733658504",
+                Duration = 5
+            })
+        end
+    else
+        StarterGui:SetCore("SendNotification", {
+            Title = "Error",
+            Text = "Failed to fetch server list: " .. tostring(data),
+            Icon = "rbxassetid://7733658504",
+            Duration = 5
+        })
+        TeleportService:Teleport(game.PlaceId)
+    end
 end
+
+-- MAIN LOOP
+task.spawn(function()
+    while true do
+        if searchForTarget() then
+            break -- Found a brainrot, stop hopping
+        else
+            hopServer()
+        end
+        task.wait(5) -- Delay to avoid rate limits
+    end
+end)

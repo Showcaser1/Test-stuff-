@@ -1,0 +1,91 @@
+if not game:IsLoaded() then game.Loaded:Wait() end
+repeat task.wait() until game.Players.LocalPlayer and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+local p = game.Players.LocalPlayer
+local c = p.Character
+local r = c:WaitForChild("HumanoidRootPart")
+
+local d = {
+    "La Vacca Saturno Saturnita",
+    "La Grande Combinasion",
+    "Trippi Troppi Troppa Trippa",
+    "Agarrini Ia Palini",
+    "Sammyni Spyderini",
+    "Los Tralaleritos",
+    "Las Tralaleritas",
+    "Graipuss Medussi",
+    "Nuclearo Dinossauro",
+    "Garama and Madundung",
+    "Tortuginni Dragonfruitini",
+    "Pot Hotspot",
+    "Las Vaquitas Saturnitas",
+    "Chicleteira Bicicleteira",
+}
+
+local found = false
+for _, v in ipairs(workspace:GetChildren()) do
+    if table.find(d, v.Name) then
+        found = true
+        break
+    end
+end
+
+if not found then
+    local teleportFunc = queueonteleport or queue_on_teleport or syn and syn.queue_on_teleport
+    if teleportFunc then
+        teleportFunc([[
+            if not game:IsLoaded() then game.Loaded:Wait() end
+            repeat task.wait(0.3) until game.Players.LocalPlayer
+            repeat task.wait(0.3) until game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+            local d = {
+                "La Vacca Saturno Saturnita",
+                "La Grande Combinasion",
+                "Trippi Troppi Troppa Trippa",
+                "Agarrini Ia Palini",
+                "Sammyni Spyderini",
+                "Los Tralaleritos",
+                "Las Tralaleritas",
+                "Graipuss Medussi",
+                "Nuclearo Dinossauro",
+                "Garama and Madundung",
+                "Tortuginni Dragonfruitini",
+                "Pot Hotspot",
+                "Las Vaquitas Saturnitas",
+                "Chicleteira Bicicleteira",
+            }
+
+            local found = false
+            for _, v in ipairs(workspace:GetChildren()) do
+                if table.find(d, v.Name) then
+                    found = true
+                    break
+                end
+            end
+
+            if found then
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/KykyryzoB/fast-slap-farm/main/without%20autoexe.lua"))()
+            end
+        ]])
+    end
+
+    local serverList = {}
+    for _, v in ipairs(game:GetService("HttpService"):JSONDecode(game:HttpGetAsync("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100")).data) do
+        if v.playing and type(v) == "table" and v.maxPlayers > v.playing and v.id ~= game.JobId then
+            serverList[#serverList + 1] = v.id
+        end
+    end
+
+    if #serverList > 0 then
+        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, serverList[math.random(1, #serverList)])
+    else
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Error",
+            Text = "No Server Found.",
+            Icon = "rbxassetid://7733658504",
+            Duration = 5
+        })
+    end
+else
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/KykyryzoB/fast-slap-farm/main/without%20autoexe.lua"))()
+end
